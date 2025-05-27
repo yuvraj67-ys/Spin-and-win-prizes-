@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Spin & Win</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #1a1a1a;
+      color: #fff;
+      font-family: 'Arial', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .wheel-container {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      margin: 2rem 0;
+    }
+    .wheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 8px solid #ffd700;
+      background: url('spinwheel.png') center/cover;
+      transition: transform 4s cubic-bezier(0.4, 0.1, 0.2, 1);
+      transform: rotate(0deg);
+    }
+    .pointer {
+      position: absolute;
+      bottom: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-bottom: 40px solid #ff0000;
+      filter: drop-shadow(0 0 8px rgba(255,0,0,0.5));
+      z-index: 2;
+    }
+    button {
+      padding: 15px 40px;
+      background: linear-gradient(45deg, #ff0000, #ff6b6b);
+      border: none;
+      color: white;
+      font-size: 20px;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 0 4px 15px rgba(255,107,107,0.4);
+    }
+    button:hover { transform: scale(1.05); }
+    .popup {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .popup-content {
+      background: #2a2a2a;
+      padding: 2rem;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+      position: relative;
+    }
+    .close-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      font-size: 28px;
+      cursor: pointer;
+      color: #fff;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 2px solid #444;
+      border-radius: 8px;
+      background: #333;
+      color: #fff;
+      font-size: 16px;
+    }
+    #shareButton {
+      background: #25D366;
+      margin-top: 20px;
+      width: 100%;
+    }
+    .error {
+      color: #ff4444;
+      margin: 5px 0;
+      display: none;
+    }
+    #step2 {
+      display: none;
+      margin-top: 20px;
+      background: #222;
+      padding: 1rem;
+      border-radius: 12px;
+    }
+    #step2 p {
+      color: #0f0;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wheel-container">
+    <div class="pointer"></div>
+    <div class="wheel" id="wheel"></div>
+  </div>
+  <button onclick="startSpin()" id="spinBtn">SPIN NOW</button>
+
+  <div class="popup" id="popup">
+    <div class="popup-content">
+      <span class="close-btn" onclick="closePopup()">×</span>
+      <h2 id="prizeText">🎉 Congratulations!</h2>
+      <div class="error" id="errorMsg"></div>
+      <input type="text" id="userName" placeholder="Your Name">
+      <input type="tel" id="userPhone" placeholder="10 Digit Mobile Number" maxlength="10">
+      <a id="whatsappShare" target="_blank">
+        <button id="shareBtn" disabled>Share on WhatsApp</button>
+      </a>
+      
+      <div id="step2">
+        <p>Shared <span id="shareCount">0</span>/5 times</p>
+        <button id="claimBtn" disabled>Claim Your Prize</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const wheel = document.getElementById('wheel');
+const spinBtn = document.getElementById('spinBtn');
+const popup = document.getElementById('popup');
+const prizeText = document.getElementById('prizeText');
+const whatsappShare = document.getElementById('whatsappShare');
+const userName = document.getElementById('userName');
+const userPhone = document.getElementById('userPhone');
+const errorMsg = document.getElementById('errorMsg');
+const shareBtn = document.getElementById('shareBtn');
+const step2 = document.getElementById('step2');
+const shareCountSpan = document.getElementById('shareCount');
+const claimBtn = document.getElementById('claimBtn');
+
+let isSpinning = false;
+let currentPrize = '';
+let shareCount = 0;
+const prizes = [
+  '₹500 Cash', 'iPhone 15 Pro', 
+  'Smart Watch', '₹1000 Cash',
+  'AirPods Pro', '₹250 Cash',
+  'Samsung Galaxy', '₹750 Cash'
+];
+
+function startSpin() {
+  if(isSpinning) return;
+  isSpinning = true;
+  spinBtn.disabled = true;
+
+  const extraSpins = 5;
+  const randomDegree = Math.floor(Math.random() * 360);
+  const totalRotation = (360 * extraSpins) + randomDegree;
+
+  wheel.style.transform = `rotate(${totalRotation}deg)`;
+
+  wheel.addEventListener('transitionend', () => {
+    const finalDegree = totalRotation % 360;
+    const prizeIndex = Math.floor((finalDegree + 22.5) / 45) % 8;
+    currentPrize = prizes[prizeIndex];
+    showResult();
+    isSpinning = false;
+    spinBtn.disabled = false;
+  }, {once: true});
+}
+
+function showResult() {
+  prizeText.innerHTML = `You Won: <span style="color:#25D366">${currentPrize}</span> 🎉`;
+  popup.style.display = 'flex';
+  userName.value = '';
+  userPhone.value = '';
+  errorMsg.style.display = 'none';
+  shareCount = 0;
+  updateShareUI();
+}
+
+function closePopup() {
+  popup.style.display = 'none';
+}
+
+function validateForm() {
+  const name = userName.value.trim();
+  const phone = userPhone.value.trim();
+  const validPhone = /^\d{10}$/.test(phone);
+
+  errorMsg.style.display = 'none';
+
+  if(!name) {
+    showError('Please enter your full name');
+    return;
+  }
+
+  if(!validPhone) {
+    showError('Invalid mobile number');
+    return;
+  }
+
+  const message = encodeURIComponent(
+    `🎉 *SPIN & WIN RESULT* 🎉\n\n` +
+    `🏆 Winner Name: ${name}\n` +
+    `📱 Contact: ${phone}\n` +
+    `🎁 Prize Won: ${currentPrize}\n\n` +
+    `👉 CLAIM YOUR PRIZE HERE:\n${window.location.href}\n\n` +
+    `📢 Share with 5 friends to claim!`
+  );
+
+  whatsappShare.href = `https://wa.me/?text=${message}`;
+  shareBtn.disabled = false;
+}
+
+function showError(msg) {
+  errorMsg.textContent = msg;
+  errorMsg.style.display = 'block';
+  shareBtn.disabled = true;
+}
+
+function updateShareUI() {
+  shareCountSpan.textContent = shareCount;
+  if (shareCount >= 5) {
+    claimBtn.disabled = false;
+  } else {
+    claimBtn.disabled = true;
+  }
+}
+
+shareBtn.addEventListener('click', () => {
+  shareCount++;
+  step2.style.display = 'block';
+  updateShareUI();
+});
+
+claimBtn.addEventListener('click', () => {
+  alert(`Congratulations ${userName.value.trim()}! Your gift "${currentPrize}" will be processed soon.`);
+  closePopup();
+});
+
+// Real-time validation
+userName.addEventListener('input', validateForm);
+userPhone.addEventListener('input', validateForm);
+
+// Close popup on outside click
+window.addEventListener('click', (e) => {
+  if(e.target === popup) closePopup();
+});
+</script>
+
+</body>
+</html>
